@@ -56,6 +56,10 @@ for maximum antenna gain greater than 9.3 dB.
     Name \t: APERR_001V01
     Type \t: Earth station, Receiving and Transmitting
     AP8  \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APERR_001V01.pdf
+
+Mode        Pattern id
+Receiving	33
+Transmitting	76
 """
 
 def help() :

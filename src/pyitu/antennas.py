@@ -22,15 +22,15 @@ Recommendations ITU-R S.466, ITU-R S.483, ITU-R S.523 and ITU-R S.735, receiving
 antenna reference patterns no worse than stated in those Recommendations should apply
 
 
-def f699(freq,phi,D)
+def f699( freq , phi , D , Gmax = None , GI = None, phi_r = None , phi_m = None , bF1245 = False )
         - freq in GHz
         - phi in degrees
         - D in meters
-        - Gmax maximum gain
-        - GI gain of the first sidelobe
-        - phi_r sidelobe position (non gain dependent)
-        - phi_m sidelobe position (gain dependent shift)
-        - bF1245 boolean sets calculation to corresponding ITU-F.1245 pattern for comparison
+        | Gmax maximum gain
+        | GI gain of the first sidelobe
+        | phi_r sidelobe position (non gain dependent)
+        | phi_m sidelobe position (gain dependent shift)
+        | bF1245 boolean sets calculation to corresponding ITU-F.1245 pattern for comparison
  
 Recommendation ITU-R F.699
 (01/2018)
@@ -42,11 +42,72 @@ from 100 MHz to 86 GHz
 
 phi_r is assumed to correspond to the off-axis angle of the peak of the first side-lobe and the phase at phi_r is assumed to be 1.5*pi
 phi_m also corresponds to the off-axis angle of the first sidelobe
- 
+
+
+ def ap8( freq , phi , D , bVerbose = False )
+        - freq in GHz
+        - phi in degrees
+        - D in meters
+        | bVerbose boolean prints extra information
+         
+Appendix 8 Earth station antenna pattern for GSO networks. Only
+for maximum antenna gain greater than 9.3 dB.
+
+    Name \t: APERR_001V01
+    Type \t: Earth station, Receiving and Transmitting
+    AP8  \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APERR_001V01.pdf
 """
 
 def help() :
     print(__desc__)
+
+def ap8( freq , phi , D , bVerbose = False ) :
+    #
+    # AP8 : https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APERR_001V01.pdf
+    #
+    desc_ = """Appendix 8 Earth station antenna pattern for GSO networks. Only
+for maximum antenna gain greater than 9.3 dB.
+
+    Name \t: APERR_001V01
+    Type \t: Earth station, Receiving and Transmitting
+    AP8  \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APERR_001V01.pdf
+    """
+    if bVerbose :
+        print ( desc_ )
+    #
+    # CONSTANTS
+    # lambda is a reserved word in python so we use k for wavelength (not wavenumber)
+    k     = c0/(freq*10**9)
+    kD    = k / D
+    Dk    = 1 / kD
+    bCase = Dk >= 100
+    phi   = 0 if phi<0 else 180 if phi>180 else phi
+
+    if phi_b < phi_r : 
+        print("Warning:: Phib () is less than Phir ().")
+
+    Gmax  = 20 * np.log10(Dk) + 7.7
+    G1    = 2 + 15 * np.log10(Dk)
+    phi_m = 20 * kD * np.sqrt(Gmax-G1)
+    phi_b = 48
+    phi_r = 15.85*kD**0.6 if bCase else 100*kD
+
+    constants = {True:tuple((32,0,-10)),False:tuple((52,-10,10))}[bCase]
+
+    phicase = 1*int(phi < phi_m) + 2*int(phi >= phi_m and phi < phi_r) + 3*int(phi_r <= phi and phi < phi_b) + 4*int(phi_b<phi)
+
+    match  phicase :
+        case 1:
+            G = Gmax - 2.5 * 10**(-3) * (Dk * phi)**2
+        case 2:
+            G = G1
+        case 3:
+            G = constants[0] + constants[1] * np.log10(Dk) - 25 * np.log10(phi)
+        case 4:
+            G = constants[2] + constants[1] * np.log10(Dk)
+        case _ :
+            print("ERROR: Bad case value")
+    return (G)
 
 
 def f699( freq , phi , D , Gmax = None , GI = None, phi_r = None , phi_m = None , bF1245 = False )

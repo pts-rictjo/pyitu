@@ -62,7 +62,7 @@ Receiving   	33
 Transmitting	76
 
 
-def s580( freq , phi , D ,
+def ap30B( freq , phi , D ,
 	  bVerbose = False , antenna_efficiency = 0.7 ) :
     #
     desc_ = Appendix 30B reference Earth station antenna pattern.
@@ -152,7 +152,7 @@ for maximum antenna gain greater than 9.3 dB.
             print("ERROR: Bad case value")
     return (G)
 
-def s580( freq , phi , D ,
+def ap30B( freq , phi , D ,
 	  bVerbose = False , antenna_efficiency = 0.7 ) :
     #
     desc_ = """Appendix 30B reference Earth station antenna pattern.

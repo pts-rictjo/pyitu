@@ -58,8 +58,26 @@ for maximum antenna gain greater than 9.3 dB.
     AP8  \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APERR_001V01.pdf
 
 Mode        Pattern id
-Receiving	33
+Receiving   	33
 Transmitting	76
+
+
+def ap30Baeq29( freq , phi , D , coefA = 29 ,
+		bVerbose = False , antenna_efficiency = 0.7 ) :
+		- freq in GHz
+        - phi in degrees
+        - D in meters
+        | bVerbose boolean prints extra information
+        | antenna_efficiency = 0.7
+    
+    Appendix 30B reference Earth station pattern with the improved side-lobe for coefficient A = 29.
+
+    Name \t: APERR_002V01
+    Type \t: Earth station, Receiving and Transmitting
+    AP30B A = 29  \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APERR_002V01.pdf
+
+Receiving   	30, 31
+Transmitting	73, 74
 """
 
 def help() :
@@ -114,7 +132,7 @@ for maximum antenna gain greater than 9.3 dB.
             print("ERROR: Bad case value")
     return (G)
 
-def ap30Baeq29( freq , phi , D , coefA = 32 ,
+def ap30Baeq29( freq , phi , D , coefA = 29 ,
 		bVerbose = False , antenna_efficiency = 0.7 ) :
     #
     desc_ = """Appendix 30B reference Earth station pattern with the improved

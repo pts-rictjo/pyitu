@@ -87,14 +87,15 @@ for maximum antenna gain greater than 9.3 dB.
     bCase = Dk >= 100
     phi   = 0 if phi<0 else 180 if phi>180 else phi
 
-    if phi_b < phi_r : 
-        print("Warning:: Phib () is less than Phir ().")
-
     Gmax  = 20 * np.log10(Dk) + 7.7
     G1    = 2 + 15 * np.log10(Dk)
     phi_m = 20 * kD * np.sqrt(Gmax-G1)
     phi_b = 48
     phi_r = 15.85*kD**0.6 if bCase else 100*kD
+
+
+    if phi_b < phi_r : 
+        print("Warning:: Phib () is less than Phir ().")
 
     constants = {True:tuple((32,0,-10)),False:tuple((52,-10,10))}[bCase]
 
@@ -107,6 +108,76 @@ for maximum antenna gain greater than 9.3 dB.
             G = G1
         case 3:
             G = constants[0] + constants[1] * np.log10(Dk) - 25 * np.log10(phi)
+        case 4:
+            G = constants[2] + constants[1] * np.log10(Dk)
+        case _ :
+            print("ERROR: Bad case value")
+    return (G)
+
+def ap30Baeq29( freq , phi , D , coefA = 32 ,
+		bVerbose = False , antenna_efficiency = 0.7 ) :
+    #
+    desc_ = """Appendix 30B reference Earth station pattern with the improved
+side-lobe for coefficient A = 29.
+
+    Name \t: APERR_002V01
+    Type \t: Earth station, Receiving and Transmitting
+    AP30B A = 29  \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APERR_002V01.pdf
+
+Appendix 30B Earth station antenna reference pattern applicable for D/lambda > 100. It is used for the determination of
+coordination requirements and interference assessment in FSS Plan.
+
+Pattern contains an optional improved near side-lobe (coefA=29) which may be used if so desired by administrations,
+particularly in the cases where an aggregate C/I ratio of 26 dB cannot be obtained.
+
+Pattern is extended for D/lambda < 100 as in Appendix 8.
+
+Original Plan was based on the antennas having diameter 7 m for the 6/4 GHz band and 3 m for the 13/10-11 GHz band
+and the antenna efficiency of 0.7.
+
+WRC-03 replaced this Appendix 30B reference antenna pattern for coefA=32 by pattern APEREC015V01 (RR-2003). This
+pattern (APERR_002V01) is still used as improved side-lobe Appendix 30B reference antenna pattern with coefA=29 for
+D/lambda > 100.
+
+BR software sets antenna efficiency to 0.7 for technical examination.
+    """
+    if bVerbose :
+        print ( desc_ )
+    #
+    # CONSTANTS
+    # lambda is a reserved word in python so we use k for wavelength (not wavenumber)
+    k     = c0/(freq*10**9)
+    kD    = k / D
+    Dk    = 1 / kD
+    bCase = Dk >= 100
+    phi   = 0 if phi<0 else 180 if phi>180 else phi
+
+    if Dk > 100 :
+        coefA = 29
+
+    Gmax  = 10 * np.log10( Dk**2 * np.pi**2 * antenna_efficiency )
+    G1    = 15 * np.log10( Dk ) - 30 + coefA
+    phi_m = 20 * kD * np.sqrt( Gmax - G1 )
+    phi_b = 10 ** ( (coefA + 10)/25 )
+    phi_r = 15.85*kD**0.6 if bCase else 100*kD
+
+    if coefA != 29 and coefA != 32 :
+        print("WARNING: UNSUPPORTED coefA SETTING TO 29")
+        coefA = 29
+    if phi_b < phi_r : 
+        print("Warning:: Phib () is less than Phir ().")
+
+    constants = {True:tuple((0,0,-10)),False:tuple((20,-10,10))}[bCase]
+
+    phicase = 1*int(phi < phi_m) + 2*int(phi >= phi_m and phi < phi_r) + 3*int(phi_r <= phi and phi < phi_b) + 4*int(phi_b<phi)
+
+    match  phicase :
+        case 1:
+            G = Gmax - 2.5 * 10**(-3) * (Dk * phi)**2
+        case 2:
+            G = G1
+        case 3:
+            G = coefA + constants[0] + constants[1] * np.log10(Dk) - 25 * np.log10(phi)
         case 4:
             G = constants[2] + constants[1] * np.log10(Dk)
         case _ :

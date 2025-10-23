@@ -44,7 +44,7 @@ phi_r is assumed to correspond to the off-axis angle of the peak of the first si
 phi_m also corresponds to the off-axis angle of the first sidelobe
 
 
- def ap8( freq , phi , D , bVerbose = False )
+def ap8( freq , phi , D , bVerbose = False )
         - freq in GHz
         - phi in degrees
         - D in meters
@@ -60,6 +60,26 @@ for maximum antenna gain greater than 9.3 dB.
 Mode        Pattern id
 Receiving   	33
 Transmitting	76
+
+
+def s580( freq , phi , D ,
+	  bVerbose = False , antenna_efficiency = 0.7 ) :
+    #
+    desc_ = Appendix 30B reference Earth station antenna pattern.
+Recommendation ITU-R S.580-6 reference Earth station antenna pattern.
+
+    Name \t: APEREC015V01
+    Type \t: Earth station, Receiving and Transmitting
+    S580 \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APEREC015V01.pdf
+
+Appendix 30B Earth station antenna pattern since WRC-03 applicable for D/lambda > 50.
+Pattern is extended for D/lambda < 50 as in Appendix 8.
+Pattern is extended for angles greater than 20 degrees as in Recommendation ITU-R S.465-5.
+Pattern is extended in the main-lobe range as in Appendix 7 to produce continuous curves.
+BR software sets antenna efficiency to 0.7 for technical examination.
+
+Receiving    \t 605
+Transmitting \t	606
 
 
 def ap30Baeq29( freq , phi , D , coefA = 29 ,
@@ -128,6 +148,71 @@ for maximum antenna gain greater than 9.3 dB.
             G = constants[0] + constants[1] * np.log10(Dk) - 25 * np.log10(phi)
         case 4:
             G = constants[2] + constants[1] * np.log10(Dk)
+        case _ :
+            print("ERROR: Bad case value")
+    return (G)
+
+def s580( freq , phi , D ,
+	  bVerbose = False , antenna_efficiency = 0.7 ) :
+    #
+    desc_ = """Appendix 30B reference Earth station antenna pattern.
+Recommendation ITU-R S.580-6 reference Earth station antenna pattern.
+
+    Name \t: APEREC015V01
+    Type \t: Earth station, Receiving and Transmitting
+    S580 \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APEREC015V01.pdf
+
+Appendix 30B Earth station antenna pattern since WRC-03 applicable for D/lambda > 50.
+Pattern is extended for D/lambda < 50 as in Appendix 8.
+Pattern is extended for angles greater than 20 degrees as in Recommendation ITU-R S.465-5.
+Pattern is extended in the main-lobe range as in Appendix 7 to produce continuous curves.
+BR software sets antenna efficiency to 0.7 for technical examination.
+
+Receiving    \t 605
+Transmitting \t	606
+    """
+    if bVerbose :
+        print ( desc_ )
+    #
+    # CONSTANTS
+    # lambda is a reserved word in python so we use k for wavelength (not wavenumber)
+    k     = c0/(freq*10**9)
+    kD    = k / D
+    Dk    = 1 / kD
+    bCase = Dk >= 50
+    phi   = 0 if phi<0 else 180 if phi>180 else phi
+
+    Gmax  = 10 * np.log10( Dk**2 * np.pi**2 * antenna_efficiency )
+    G1    = 2 + 15 * np.log10( Dk ) if Dk<50 else -21 + 25 * np.log10(Dk) if Dk<100 else -1 + 15 * np.log10(Dk)
+
+    phi_m = 20 * kD * np.sqrt( Gmax - G1 )
+    phi_b = 10 ** ( 42/25 )
+    phi_r = 15.85*kD**0.6 if Dk>=100 else 100*kD
+
+    if Gmax < G1 :
+        print ("ERROR: UNSUPPORTED Gmax<G1 COMPLEX")
+        coefA = 29
+    if phi_b < phi_r : 
+        print ("ERROR: Phib () is less than Phir ().")
+
+    constants = {True:tuple((29,0,-10)),False:tuple((52,-10,10))}[bCase]
+
+    phicase =	1*int(phi < phi_m) + 2*int(phi >= phi_m and phi < phi_r) +\
+		3*int(phi_r <= phi and phi < phi_b) * int(not bCase) +\
+                ( 3*int(phi_r <= phi and phi < 19.95) + 5*int(19.95 <= phi and phi < phi_b)  ) * int( bCase ) +\
+		4*int(phi_b<phi)
+
+    match  phicase :
+        case 1:
+            G = Gmax - 2.5 * 10**(-3) * (Dk * phi)**2
+        case 2:
+            G = G1
+        case 3:
+            G = constants[0] + constants[1] * np.log10(Dk) - 25 * np.log10(phi)
+        case 4:
+            G = constants[2] + constants[1] * np.log10(Dk)
+        case 5:
+            G = np.min([ -3.5 , 32 - 25*np.log10(phi) ])
         case _ :
             print("ERROR: Bad case value")
     return (G)

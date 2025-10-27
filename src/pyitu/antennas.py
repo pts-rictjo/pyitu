@@ -383,14 +383,49 @@ satellites. For Ls = -20 dB. For Ls = -10 dB.
     if pp0 < 0 :
         print ("ERROR: Not recognized value")
     if  pp0 <= a/2 :
-        G = Gmax – 12 * pp0**2
+        G = Gmax - 12 * pp0**2
     elif pp0 <= b/2 :
         G = Gmax + Ls
     elif b/2 < pp0 :
-        G = Gmax + Ls + 20 – 25 * np.log10( 2*pp0 )
+        G = Gmax + Ls + 20 - 25 * np.log10( 2*pp0 )
     if G < 0 :
         G = 0
     return G
+
+
+def s1528( Gmax , phi ):
+    desc_ = """ Recommendation ITU-R S.1528-0 space station antenna pattern for
+non-GSO satellites operating in FSS below 30 GHz. Recommends 1.2
+
+    Name \t: APSREC409V01
+    Type \t: Space station, Receiving and Transmitting
+    S1528\t:  https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/REC-1528.pdf
+
+    https://www.itu.int/dms_pubrec/itu-r/rec/s/R-REC-S.1528-0-200106-I!!PDF-E.pdf
+    """
+    Ln	= -15 dB
+    z	= 1
+
+    a	= 2.58
+    b	= 6.32
+    Dk		= 10**( (Gmax-7.7)/20 )
+    psib	= np.sqrt(1200) * Dk
+    Y		= b*psib*10**( 0.04*(Gmax-15) )
+
+    G1,G2,G3,G4,G5 = 0,0,0,0,0
+    if phi>0 and phi <= a*psib :
+        G1 = Gmax - 3 * (phi/psib)**1.5
+    elif phi <= b * psib :
+        G2 = Gmax - 15
+    elif  phi <= Y :
+        G3 = Gmax - 15 - 25 * np.log10 (phi/b/psib)
+    elif phi <= 90 :
+        G4 = 0
+    elif phi<=180 :
+        G5 = 0.25 * Gmax
+    G = np.max([G1, G2, G3, G4, G5])
+    return ( G )
+
 
 if __name__=='__main__':
 

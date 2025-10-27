@@ -362,6 +362,36 @@ def p465( freq , phi , D ,
             G = -10
     return G
 
+def s672( Gmax , phi , phi0 , Ls = –20 ):
+    desc_ = """Recommendation ITU-R S.672-4 space station antenna pattern for
+use as a designe objective in the FSS employing geostationary
+satellites. For Ls = -20 dB. For Ls = -10 dB.
+
+    Name \t: APSREC408V01 APSREC407V01
+    Type \t: Single feed circular beams. 
+	    Ls = -10 dB for use in article 22, table 22-2.
+		Ls = -20 dB for use in article 22, tables 22-2 and 22-3.
+
+     S.672 \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APSREC408V01.pdf
+           \t: https://www.itu.int/en/ITU-R/software/Documents/ant-pattern/APL_DOC_BY_PATTERN_NAME/APSREC407V01.pdf
+
+    https://www.itu.int/dms_pubrec/itu-r/rec/s/R-REC-S.672-4-199709-I!!PDF-E.pdf
+    """
+    a = {-20:2.58,-10:1.83}[Ls]
+    b = 6.32
+	pp0 = phi/phi0
+    if pp0 < 0 :
+        print ("ERROR: Not recognized value")
+    if  pp0 <= a/2 :
+        G = Gmax – 12 * pp0**2
+    elif pp0 <= b/2 :
+        G = Gmax + Ls
+    elif b/2 < pp0 :
+        G = Gmax + Ls + 20 – 25 * np.log10( 2*pp0 )
+    if G < 0 :
+        G = 0
+    return G
+
 if __name__=='__main__':
 
     print("ANTENNAS")
